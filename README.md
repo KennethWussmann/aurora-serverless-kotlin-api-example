@@ -24,6 +24,7 @@ To switch between JDBC and RDS Data API set the `DB_CONNECTION` environment vari
 * DB needs to be in same VPC with application because no public accessible endpoint can be assigned.
 * DB needs too long to start, so the first Lambda request will always time out.
 * RDS Data API requires SecretsManager.
+* RDS Data API doesn't support prepared statements with special column types like `UUID` in Postgres. You need to use unsafe way of inserting raw values into queries
 * [rds-data-api-client-library-java](https://github.com/awslabs/rds-data-api-client-library-java) offering mapping but not compatible with Kotlin due to inaccessible fields and only compatible with AWS SDK v1.
 
 ## Deployment

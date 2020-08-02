@@ -34,21 +34,24 @@ class RdsDataUserRepsitory : UserRepository {
         .withSecretArn(System.getenv("DB_SECRET"))
         .withResourceArn(System.getenv("DB_CLUSTER"))
 
-    override fun createUser(username: String): UserDto =
+    override fun createUser(username: String): UserDto = UUID.randomUUID().toString().let { id ->
         rds.executeStatement(
-            baseRequest
-                .clone()
-                .withSql("INSERT INTO users(id, username) VALUES (:id, :username)")
-                .withParameters(
-                    SqlParameter().withName("id").withValue(Field().withStringValue(UUID.randomUUID().toString())),
-                    SqlParameter().withName("username").withValue(Field().withStringValue(username))
-                )
-        ).records.first().let {
-            UserDto(
-                id = it[0].stringValue,
-                username = it[1].stringValue
+                baseRequest
+                    .clone()
+                    .withSql("INSERT INTO users(id, username) VALUES ('$id', :username)")
+                    .withParameters(
+                        SqlParameter().withName("username").withValue(Field().withStringValue(username))
+                    )
             )
-        }
+            .takeIf { it.numberOfRecordsUpdated == 1L }
+            ?.let {
+                UserDto(
+                    id = id,
+                    username = username
+                )
+            } ?: error("Failed to create user")
+    }
+
 
     override fun getAllUsers() =
         rds.executeStatement(

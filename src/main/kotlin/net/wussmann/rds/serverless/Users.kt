@@ -38,6 +38,6 @@ data class ListDto<T>(
 )
 
 data class UserDto(
-    val id: String? = null,
-    val username: String? = null
+    val id: String,
+    val username: String
 )
