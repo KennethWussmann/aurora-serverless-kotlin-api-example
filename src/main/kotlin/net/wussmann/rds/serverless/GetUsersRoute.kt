@@ -8,15 +8,15 @@ import org.http4k.core.Status.Companion.OK
 import org.http4k.core.with
 import org.http4k.format.Jackson.auto
 
-class GetUsersRoute : HttpHandler, DatabaseContext() {
+class GetUsersRoute(
+    private val userRepository: UserRepository
+) : HttpHandler {
 
     private val responseLens = Body
         .auto<ListDto<UserDto>>("List of all existing users")
         .toLens()
 
     override fun invoke(request: Request) =
-        transaction {
-            Response(OK)
-                .with(responseLens of User.all().toDto())
-        }
+        Response(OK)
+            .with(responseLens of userRepository.getAllUsers())
 }

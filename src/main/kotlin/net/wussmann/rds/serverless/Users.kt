@@ -22,6 +22,11 @@ class User(id: EntityID<UUID>) : UUIDEntity(id) {
     )
 }
 
+fun <T> List<T>.toDto() = ListDto(
+    total = size.toLong(),
+    items = this
+)
+
 fun SizedIterable<User>.toDto() = ListDto(
     total = count(),
     items = map { it.toDto() }
@@ -33,6 +38,6 @@ data class ListDto<T>(
 )
 
 data class UserDto(
-    val id: String,
-    val username: String
+    val id: String? = null,
+    val username: String? = null
 )
