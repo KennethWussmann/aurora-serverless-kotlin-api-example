@@ -1,0 +1,17 @@
+{
+  "name": "rds-serverless",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "serverless": "^1.77.1"
+  },
+  "devDependencies": {
+    "serverless-vpc-plugin": "^1.0.0"
+  }
+}

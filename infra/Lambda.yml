@@ -1,0 +1,9 @@
+restRequestHandler:
+  handler: "org.http4k.serverless.lambda.LambdaFunction::handle"
+  environment:
+    HTTP4K_BOOTSTRAP_CLASS: "net.wussmann.rds.serverless.RestApiHandler"
+  events:
+    - http:
+        path: /{proxy+}
+        method: ANY
+        cors: true
