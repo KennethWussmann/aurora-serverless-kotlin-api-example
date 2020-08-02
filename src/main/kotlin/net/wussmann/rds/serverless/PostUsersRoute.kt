@@ -11,7 +11,7 @@ import org.http4k.format.Jackson.auto
 class PostUsersRoute : HttpHandler, DatabaseContext() {
 
     private val responseLens = Body
-        .auto<User>("Newly created user")
+        .auto<UserDto>("Newly created user")
         .toLens()
 
     private val requestBodyLens = Body
@@ -23,8 +23,10 @@ class PostUsersRoute : HttpHandler, DatabaseContext() {
     )
 
     override fun invoke(request: Request) =
-        Response(CREATED)
-            .with(responseLens of User.new {
-                username = requestBodyLens(request).username
-            })
+        transaction {
+            Response(CREATED)
+                .with(responseLens of User.new {
+                    username = requestBodyLens(request).username
+                }.toDto())
+        }
 }

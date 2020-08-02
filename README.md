@@ -11,6 +11,11 @@ Testing the usage of RDS Aurora Serverless in a JVM Lambda environment
 * [Exposed](https://github.com/JetBrains/Exposed/) as ORM
 * [HikariCP](https://github.com/brettwooldridge/HikariCP) as Connection Pool with Exposed
 
+## Pitfalls
+* DB needs to be in same VPC with application because no public accessible endpoint can be assigned
+* DB needs too long to start, so the first Lambda request will always time out
+
+
 ## Deployment
 
 > Requires Yarn!
