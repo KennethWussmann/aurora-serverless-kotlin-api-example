@@ -4,6 +4,8 @@ import com.amazonaws.services.rdsdata.AWSRDSDataClient
 import com.amazonaws.services.rdsdata.model.ExecuteStatementRequest
 import com.amazonaws.services.rdsdata.model.Field
 import com.amazonaws.services.rdsdata.model.SqlParameter
+import net.wussmann.rds.serverless.CloudWatchService.TransactionType.READ
+import net.wussmann.rds.serverless.CloudWatchService.TransactionType.WRITE
 import java.util.UUID
 
 interface UserRepository {
@@ -13,20 +15,28 @@ interface UserRepository {
     fun getAllUsers(): ListDto<UserDto>
 }
 
-class JdbcUserRepository : UserRepository, DatabaseContext() {
+class JdbcUserRepository(
+    private val cloudWatchService: CloudWatchService
+) : UserRepository, DatabaseContext() {
 
-    override fun createUser(username: String) = transaction {
-        User.new {
-            this.username = username
-        }.toDto()
+    override fun createUser(username: String) = cloudWatchService.measureTransaction(WRITE) {
+        transaction {
+            User.new {
+                this.username = username
+            }.toDto()
+        }
     }
 
-    override fun getAllUsers() = transaction {
-        User.all().toDto()
+    override fun getAllUsers() = cloudWatchService.measureTransaction(READ) {
+        transaction {
+            User.all().toDto()
+        }
     }
 }
 
-class RdsDataUserRepsitory : UserRepository {
+class RdsDataUserRepsitory(
+    private val cloudWatchService: CloudWatchService
+) : UserRepository {
 
     private val rds = AWSRDSDataClient.builder().build()
     private val baseRequest = ExecuteStatementRequest()
@@ -34,8 +44,9 @@ class RdsDataUserRepsitory : UserRepository {
         .withSecretArn(System.getenv("DB_SECRET"))
         .withResourceArn(System.getenv("DB_CLUSTER"))
 
-    override fun createUser(username: String): UserDto = UUID.randomUUID().toString().let { id ->
-        rds.executeStatement(
+    override fun createUser(username: String): UserDto = cloudWatchService.measureTransaction(WRITE) {
+        UUID.randomUUID().toString().let { id ->
+            rds.executeStatement(
                 baseRequest
                     .clone()
                     .withSql("INSERT INTO users(id, username) VALUES ('$id', :username)")
@@ -43,25 +54,28 @@ class RdsDataUserRepsitory : UserRepository {
                         SqlParameter().withName("username").withValue(Field().withStringValue(username))
                     )
             )
-            .takeIf { it.numberOfRecordsUpdated == 1L }
-            ?.let {
-                UserDto(
-                    id = id,
-                    username = username
-                )
-            } ?: error("Failed to create user")
+                .takeIf { it.numberOfRecordsUpdated == 1L }
+                ?.let {
+                    UserDto(
+                        id = id,
+                        username = username
+                    )
+                } ?: error("Failed to create user")
+        }
     }
 
 
     override fun getAllUsers() =
-        rds.executeStatement(
-            baseRequest
-                .clone()
-                .withSql("SELECT * FROM users")
-        ).records.map {
-            UserDto(
-                id = it[0].stringValue,
-                username = it[1].stringValue
-            )
-        }.toDto()
+        cloudWatchService.measureTransaction(READ) {
+            rds.executeStatement(
+                baseRequest
+                    .clone()
+                    .withSql("SELECT * FROM users")
+            ).records.map {
+                UserDto(
+                    id = it[0].stringValue,
+                    username = it[1].stringValue
+                )
+            }.toDto()
+        }
 }

@@ -14,11 +14,15 @@ import kotlin.time.seconds
 
 abstract class DatabaseContext {
 
+    companion object {
+        var connected: Boolean = false
+    }
+
     fun <T> transaction(statement: Transaction.() -> T): T {
         Database.connect({
             for (retries in 1..3) {
                 try {
-                    return@connect getConnection()
+                    return@connect getConnection().also { connected = true }
                 } catch (e: SQLException) {
                     e.printStackTrace()
                 }

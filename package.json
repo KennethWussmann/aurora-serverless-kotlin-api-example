@@ -10,8 +10,5 @@
   "license": "ISC",
   "dependencies": {
     "serverless": "^1.77.1"
-  },
-  "devDependencies": {
-    "serverless-vpc-plugin": "^1.0.0"
   }
 }

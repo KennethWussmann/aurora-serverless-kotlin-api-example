@@ -4,10 +4,16 @@ provider:
   runtime: java11
   region: eu-central-1
   versionFunctions: false
-  memorySize: 512
+  memorySize: 1024
   timeout: 25
   logRetentionInDays: 1
   role: LambdaAPITrustRole
+  vpc:
+    securityGroupIds:
+      - !GetAtt LambdaSecurityGroup.GroupId
+    subnetIds:
+      - !Ref SubnetAPrivate
+      - !Ref SubnetBPrivate
   environment:
     STAGE: ${self:provider.stage}
     DB_CLUSTER: !Join [":", ["arn:aws:rds", !Ref "AWS::Region", !Ref "AWS::AccountId", "cluster", !Ref RDSCluster]]
@@ -17,31 +23,17 @@ provider:
     DB_NAME: "${self:custom.rds.name}"
     DB_USER: "${self:custom.rds.username}"
     DB_PASSWORD: "${self:custom.rds.password}"
-    DB_CONNECTION: "DATA"
+    DB_CONNECTION: "JDBC" # or JDBC - defaults to choose randomly every request
   tags:
     SERVICE: ${self:service}
-
-plugins:
-  - serverless-vpc-plugin
 
 custom:
   rds:
     name: "rdstest"
     username: "rdstest"
     password: "44ba78ab744943cba9e2ffefd7f0aef0"
-  vpcConfig:
-    cidrBlock: '10.0.0.0/16'
-    createDbSubnet: true
-    createNatInstance: false
-    createBastionHost: false
-    createParameters: false
-    services:
-      - kms
-      - rds
-      - rds-data
-    subnetGroups:
-      - rds
-    exportOutputs: false
+  vpc:
+    classB: "20"
 
 package:
   artifact: "build/libs/rds-serverless-all.jar"
@@ -49,4 +41,5 @@ package:
 functions: ${file(infra/Lambda.yml)}
 resources:
   - ${file(infra/IAM.yml)}
+  - ${file(infra/VPC.yml)}
   - ${file(infra/RDS.yml)}

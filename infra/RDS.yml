@@ -7,34 +7,28 @@ Resources:
       Parameters:
         rds.force_ssl: 1
 
-  AppSecurityGroupEgress:
-    Type: 'AWS::EC2::SecurityGroupEgress'
+  RDSSecurityGroupIngress:
+    Type: AWS::RDS::DBSubnetGroup
     Properties:
-      Description: 'permit PostgreSQL (5432) to DBSecurityGroup'
-      DestinationSecurityGroupId: !Ref DBSecurityGroup
-      FromPort: 5432
-      GroupId: !GetAtt AppSecurityGroup.GroupId
-      IpProtocol: tcp
-      ToPort: 5432
+      DBSubnetGroupDescription: "DBSubnetGroup ${self:service}"
+      SubnetIds:
+        - !Ref SubnetAPublic
+        - !Ref SubnetBPublic
+        - !Ref SubnetCPublic
 
   DBSecurityGroup:
     Type: 'AWS::EC2::SecurityGroup'
     Properties:
       GroupDescription: 'RDS Security Group'
-      SecurityGroupEgress:
-        - Description: 'deny all outbound'
-          IpProtocol: '-1'
-          CidrIp: '127.0.0.1/32'
+      VpcId: !Ref VPC
       SecurityGroupIngress:
-        - Description: 'permit PostgreSQL (5432) from AppSecurityGroup'
-          FromPort: 5432
-          IpProtocol: tcp
-          SourceSecurityGroupId: !GetAtt AppSecurityGroup.GroupId
+        - FromPort: 5432
           ToPort: 5432
+          IpProtocol: tcp
+          CidrIp: !GetAtt VPC.CidrBlock
       Tags:
         - Key: Name
           Value: !Join ['-', [!Ref 'AWS::StackName', rds]]
-      VpcId: !Ref VPC
 
   RDSCluster:
     Type: 'AWS::RDS::DBCluster'
@@ -42,7 +36,7 @@ Resources:
       DatabaseName: "${self:custom.rds.name}"
       MasterUsername: "${self:custom.rds.username}"
       MasterUserPassword: "${self:custom.rds.password}"
-      DBClusterIdentifier: "rds-serverless"
+      DBClusterIdentifier: "rds-serverless-test"
       EnableHttpEndpoint: true
       Engine: aurora-postgresql
       EngineVersion: 10.7
@@ -53,6 +47,6 @@ Resources:
         MinCapacity: 2
         MaxCapacity: 8
         SecondsUntilAutoPause: 600
-      DBSubnetGroupName: !Ref RDSSubnetGroup
+      DBSubnetGroupName: !Ref RDSSecurityGroupIngress
       VpcSecurityGroupIds:
         - !Ref DBSecurityGroup
