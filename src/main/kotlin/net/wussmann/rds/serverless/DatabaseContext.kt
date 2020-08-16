@@ -7,6 +7,7 @@ import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.Transaction
 import org.postgresql.Driver
+import java.sql.DriverManager
 import java.sql.SQLException
 import kotlin.time.measureTimedValue
 import kotlin.time.minutes
@@ -14,15 +15,11 @@ import kotlin.time.seconds
 
 abstract class DatabaseContext {
 
-    companion object {
-        var connected: Boolean = false
-    }
-
     fun <T> transaction(statement: Transaction.() -> T): T {
         Database.connect({
             for (retries in 1..3) {
                 try {
-                    return@connect getConnection().also { connected = true }
+                    return@connect getConnectionFromPool()
                 } catch (e: SQLException) {
                     e.printStackTrace()
                 }
@@ -42,7 +39,7 @@ abstract class DatabaseContext {
             HikariConfig().apply {
                 driverClassName = Driver::class.qualifiedName
                 jdbcUrl = this@DatabaseContext.jdbcUrl
-                maximumPoolSize = 2
+                maximumPoolSize = 1
                 isAutoCommit = false
                 transactionIsolation = "TRANSACTION_READ_COMMITTED"
                 connectionTimeout = 2.seconds.inMicroseconds.toLong()
@@ -57,7 +54,7 @@ abstract class DatabaseContext {
         throw e
     }
 
-    private fun getConnection() = measureTimedValue {
+    private fun getConnectionFromPool() = measureTimedValue {
         connectionPool.connection
     }.let { (connection, duration) ->
         println("Got connection in $duration")

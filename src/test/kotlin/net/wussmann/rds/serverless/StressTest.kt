@@ -15,24 +15,31 @@ import kotlin.random.Random
 import kotlin.time.measureTimedValue
 
 private val fuel = FuelManager().apply {
-    basePath = "https://cg64bs3pbe.execute-api.eu-central-1.amazonaws.com/dev"
+    basePath = "https://o8plipkg5g.execute-api.eu-central-1.amazonaws.com/dev"
 }
 
+private val connectionType = CloudWatchService.ConnectionType.DATA
+
+private val slowMode = false //connectionType == CloudWatchService.ConnectionType.JDBC
+private val maxRequests = 10_000
 private var requests = 0
 
 /**
- * Stess test to run multiple read & write operations at the same time
+ * Stress test to run multiple read & write operations at the same time
  */
 fun main() {
     runBlocking {
         while (true) {
-            if (requests >= 5000) break
+            if (requests >= maxRequests) break
             launch {
                 if (Random.nextBoolean()) {
                     readOperation()
                 } else {
                     writeOperation()
                 }
+            }
+            if (slowMode) {
+                delay(100)
             }
             requests++
             println("Requests $requests")
@@ -43,7 +50,9 @@ fun main() {
 private suspend fun readOperation() {
     measureTimedValue {
         try {
-            fuel.get("/users").awaitStringResponse()
+            fuel.get("/users")
+                .header("DB-Connection", connectionType.name)
+                .awaitStringResponse()
         } catch (e: Exception) {
             println("Error ${e.message}")
             null
@@ -56,11 +65,14 @@ private suspend fun readOperation() {
 private suspend fun writeOperation() {
     measureTimedValue {
         try {
-            fuel.post("/users").body(
-                """
-                {"username": "${UUID.randomUUID().toString().substring(0, 6)}"}
-            """.trimIndent()
-            ).awaitStringResponse()
+            fuel.post("/users")
+                .header("DB-Connection", connectionType.name)
+                .body(
+                    """
+                        {"username": "${UUID.randomUUID().toString().substring(0, 6)}"}
+                    """.trimIndent()
+                )
+                .awaitStringResponse()
         } catch (e: Exception) {
             println("Error ${e.message}")
             null

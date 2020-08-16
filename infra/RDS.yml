@@ -36,7 +36,7 @@ Resources:
       DatabaseName: "${self:custom.rds.name}"
       MasterUsername: "${self:custom.rds.username}"
       MasterUserPassword: "${self:custom.rds.password}"
-      DBClusterIdentifier: "rds-serverless-test"
+      DBClusterIdentifier: "rds-serverless"
       EnableHttpEndpoint: true
       Engine: aurora-postgresql
       EngineVersion: 10.7
@@ -45,7 +45,7 @@ Resources:
       ScalingConfiguration:
         AutoPause: true
         MinCapacity: 2
-        MaxCapacity: 8
+        MaxCapacity: 16
         SecondsUntilAutoPause: 600
       DBSubnetGroupName: !Ref RDSSecurityGroupIngress
       VpcSecurityGroupIds:

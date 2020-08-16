@@ -8,17 +8,16 @@ import org.http4k.core.Filter
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method.GET
 import org.http4k.core.Method.POST
+import org.http4k.core.Request
 import org.http4k.core.then
 import org.http4k.format.Jackson
 import org.http4k.routing.routes
 import org.http4k.serverless.AppLoader
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.transactions.TransactionManager
 
 object RestApiHandler : AppLoader {
 
     override fun invoke(env: Map<String, String>): HttpHandler = { request ->
-        val connectionType = getConnectionType()
+        val connectionType = getConnectionType(request)
         val userRepository = getUserRepository(connectionType)
         val connectionTypeInjector = connectionTypeInjector(connectionType)
 
@@ -41,13 +40,13 @@ object RestApiHandler : AppLoader {
         }
     }
 
-    private fun getConnectionType() =
-        System.getenv("DB_CONNECTION")
+    private fun getConnectionType(request: Request) =
+        (request.header("DB-Connection") ?: System.getenv("DB_CONNECTION"))
         ?.let { CloudWatchService.ConnectionType.valueOf(it.toUpperCase()) }
         ?: CloudWatchService.ConnectionType.values().random()
 
     private fun getUserRepository(connectionType: CloudWatchService.ConnectionType): UserRepository {
-        val cloudWatchService = CloudWatchService(connectionType, coldStart = !DatabaseContext.connected)
+        val cloudWatchService = CloudWatchService(connectionType)
         println("Using ${connectionType.name} connection")
         return when (connectionType) {
             CloudWatchService.ConnectionType.DATA -> RdsDataUserRepsitory(cloudWatchService)

@@ -13,8 +13,7 @@ import kotlin.time.measureTimedValue
  */
 class CloudWatchService(
     private val connectionType: ConnectionType,
-    private val cloudWatchClient: CloudWatchClient = CloudWatchClient.create(),
-    private val coldStart: Boolean
+    private val cloudWatchClient: CloudWatchClient = CloudWatchClient.create()
 ) {
 
     enum class ConnectionType(val displayName: String) {
