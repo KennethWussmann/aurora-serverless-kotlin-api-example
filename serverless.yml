@@ -17,7 +17,7 @@ provider:
   environment:
     STAGE: ${self:provider.stage}
     DB_CLUSTER: !Join [":", ["arn:aws:rds", !Ref "AWS::Region", !Ref "AWS::AccountId", "cluster", !Ref RDSCluster]]
-    DB_SECRET: !Join [":", ["arn:aws:secretsmanager", !Ref "AWS::Region", !Ref "AWS::AccountId", "secret", "/rds-aurora-serverless-dev/db-credentials-8qNnjK"]]
+    DB_SECRET: !Join [":", ["arn:aws:secretsmanager", !Ref "AWS::Region", !Ref "AWS::AccountId", "secret", "/rds-serverless-p3FrOW"]]
     DB_HOST: !GetAtt RDSCluster.Endpoint.Address
     DB_PORT: !GetAtt RDSCluster.Endpoint.Port
     DB_NAME: "${self:custom.rds.name}"

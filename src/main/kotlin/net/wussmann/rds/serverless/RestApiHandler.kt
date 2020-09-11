@@ -49,7 +49,7 @@ object RestApiHandler : AppLoader {
         val cloudWatchService = CloudWatchService(connectionType)
         println("Using ${connectionType.name} connection")
         return when (connectionType) {
-            CloudWatchService.ConnectionType.DATA -> RdsDataUserRepsitory(cloudWatchService)
+            CloudWatchService.ConnectionType.DATA -> RdsDataUserRepository(cloudWatchService)
             CloudWatchService.ConnectionType.JDBC -> JdbcUserRepository(cloudWatchService)
         }
     }

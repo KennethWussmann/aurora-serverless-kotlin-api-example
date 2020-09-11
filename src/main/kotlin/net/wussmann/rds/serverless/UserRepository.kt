@@ -17,7 +17,7 @@ interface UserRepository {
 
 class JdbcUserRepository(
     private val cloudWatchService: CloudWatchService
-) : UserRepository, DatabaseContext() {
+) : UserRepository, DatabaseContext(connectionPooling = false) {
 
     override fun createUser(username: String) = cloudWatchService.measureTransaction(WRITE) {
         transaction {
@@ -29,12 +29,12 @@ class JdbcUserRepository(
 
     override fun getAllUsers() = cloudWatchService.measureTransaction(READ) {
         transaction {
-            User.all().toDto()
+            User.all().limit(1000).toDto()
         }
     }
 }
 
-class RdsDataUserRepsitory(
+class RdsDataUserRepository(
     private val cloudWatchService: CloudWatchService
 ) : UserRepository {
 
@@ -70,7 +70,7 @@ class RdsDataUserRepsitory(
             rds.executeStatement(
                 baseRequest
                     .clone()
-                    .withSql("SELECT * FROM users")
+                    .withSql("SELECT * FROM users LIMIT 1000;")
             ).records.map {
                 UserDto(
                     id = it[0].stringValue,

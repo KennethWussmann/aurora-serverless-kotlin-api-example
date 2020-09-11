@@ -15,13 +15,13 @@ import kotlin.random.Random
 import kotlin.time.measureTimedValue
 
 private val fuel = FuelManager().apply {
-    basePath = "https://o8plipkg5g.execute-api.eu-central-1.amazonaws.com/dev"
+    basePath = "<URL GOES HERE>"
 }
 
 private val connectionType = CloudWatchService.ConnectionType.DATA
+private val slowMode = true // connectionType == CloudWatchService.ConnectionType.JDBC
+private val maxRequests = 100_000
 
-private val slowMode = false //connectionType == CloudWatchService.ConnectionType.JDBC
-private val maxRequests = 10_000
 private var requests = 0
 
 /**
@@ -39,7 +39,7 @@ fun main() {
                 }
             }
             if (slowMode) {
-                delay(100)
+                delay(10)
             }
             requests++
             println("Requests $requests")
